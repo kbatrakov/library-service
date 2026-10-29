@@ -18,4 +18,4 @@ class Book(models.Model):
                                     )
 
     def __str__(self):
-        return self.title
+        return f"Title: {self.title}, Author: {self.author}"
