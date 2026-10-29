@@ -10,7 +10,7 @@ ENV/
 
 .env
 .env.*
-!.env.example
+!.env.sample
 
 *.log
 db.sqlite3
