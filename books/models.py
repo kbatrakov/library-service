@@ -16,3 +16,6 @@ class Book(models.Model):
                                     decimal_places=2,
                                     validators=[MinValueValidator(Decimal("0.01"))]
                                     )
+
+    def __str__(self):
+        return self.title
