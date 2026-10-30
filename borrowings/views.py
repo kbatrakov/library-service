@@ -1,5 +1,7 @@
 from django.db import transaction
 from django.utils import timezone
+from drf_spectacular.utils import (extend_schema_view, extend_schema,
+                                   OpenApiParameter)
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -12,6 +14,22 @@ from borrowings.serializers import (
 from borrowings.telegram import send_telegram_message
 
 
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "is_active",
+                type=bool,
+                description="Only borrowings that are not returned yet",
+            ),
+            OpenApiParameter(
+                "user_id",
+                type=int,
+                description="Filter by user id (staff only)",
+            ),
+        ]
+    )
+)
 class BorrowingViewSet(mixins.CreateModelMixin,
                        mixins.ListModelMixin,
                        mixins.RetrieveModelMixin,
@@ -58,6 +76,7 @@ class BorrowingViewSet(mixins.CreateModelMixin,
             f"Expected return: {borrowing.expected_return_date}"
         )
 
+    @extend_schema(request=None, responses=BorrowingDetailSerializer)
     @action(detail=True, methods=["post"], url_path="return")
     def return_book(self, request, pk=None):
         with transaction.atomic():
@@ -78,4 +97,4 @@ class BorrowingViewSet(mixins.CreateModelMixin,
             book.inventory += 1
             book.save()
 
-        return Response(BorrowingSerializer(borrowing).data)
+        return Response(BorrowingDetailSerializer(borrowing).data)

@@ -9,6 +9,7 @@ from borrowings.models import Borrowing
 class BorrowingListSerializer(serializers.ModelSerializer):
     book = serializers.StringRelatedField()
     user = serializers.StringRelatedField()
+
     class Meta:
         model = Borrowing
         fields = [
@@ -17,11 +18,8 @@ class BorrowingListSerializer(serializers.ModelSerializer):
             "expected_return_date",
             "actual_return_date",
             "book",
-            "user"
-
+            "user",
         ]
-        read_only_fields = fields
-
 
 
 class BorrowingDetailSerializer(BorrowingListSerializer):
@@ -47,7 +45,9 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         with transaction.atomic():
-            book = Book.objects.select_for_update().get(pk=validated_data["book"].pk)
+            book = Book.objects.select_for_update().get(
+                pk=validated_data["book"].pk
+            )
             if book.inventory < 1:
                 raise serializers.ValidationError("This book is out of stock.")
             book.inventory -= 1

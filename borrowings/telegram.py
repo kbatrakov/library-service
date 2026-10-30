@@ -10,7 +10,8 @@ def send_telegram_message(text: str) -> bool:
         logger.warning("Telegram settings are not configured")
         return False
 
-    url = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage"
+    url = (f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/"
+           f"sendMessage")
     try:
         response = requests.post(
             url,

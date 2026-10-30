@@ -1,7 +1,8 @@
 from rest_framework import viewsets
 from books.models import Book
 from books.permissions import IsAdminOrReadOnly
-from books.serializers import BookSerializer, BookListSerializer, BookDetailSerializer
+from books.serializers import (BookSerializer, BookListSerializer,
+                               BookDetailSerializer)
 
 
 class BookViewSet(viewsets.ModelViewSet):
@@ -12,7 +13,7 @@ class BookViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.queryset
         if self.action == "retrieve":
-            queryset = queryset.prefetch_related("borrowings")
+            queryset = queryset.prefetch_related("borrowings__user")
         return queryset
 
     def get_serializer_class(self):
