@@ -39,7 +39,7 @@ class BookListSerializer(serializers.ModelSerializer):
 
 
 class BookDetailSerializer(serializers.ModelSerializer):
-    borrowings = serializers.SerializerMethodField()
+    borrowings = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Book
         fields = [
@@ -55,10 +55,11 @@ class BookDetailSerializer(serializers.ModelSerializer):
     def get_borrowings(self, obj):
         return [
             {
-                "id": book.id,
-                "borrow_date": book.borrow_date,
-                "expected_return_date": book.expected_return_date,
-                "actual_return_date": book.actual_return_date,
+                "id": borrowing.id,
+                "borrowed_by": borrowing.user.email,
+                "borrow_date": borrowing.borrow_date,
+                "expected_return_date": borrowing.expected_return_date,
+                "actual_return_date": borrowing.actual_return_date,
             }
-            for book in obj.borrowings.all()
+            for borrowing in obj.borrowings.all()
         ]

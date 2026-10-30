@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from borrowings.models import Borrowing
 from borrowings.serializers import (
     BorrowingCreateSerializer,
-    BorrowingSerializer,
+    BorrowingListSerializer, BorrowingDetailSerializer,
 )
 from borrowings.telegram import send_telegram_message
 
@@ -17,7 +17,6 @@ class BorrowingViewSet(mixins.CreateModelMixin,
                        mixins.RetrieveModelMixin,
                        viewsets.GenericViewSet):
 
-    serializer_class = BorrowingSerializer
     queryset = Borrowing.objects.select_related("book", "user")
     permission_classes = [IsAuthenticated]
 
@@ -43,9 +42,11 @@ class BorrowingViewSet(mixins.CreateModelMixin,
         return queryset
 
     def get_serializer_class(self):
+        if self.action == "list":
+            return BorrowingListSerializer
         if self.action == "create":
             return BorrowingCreateSerializer
-        return BorrowingSerializer
+        return BorrowingDetailSerializer
 
     def perform_create(self, serializer):
         borrowing = serializer.save(user=self.request.user)

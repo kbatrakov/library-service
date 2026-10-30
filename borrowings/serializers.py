@@ -6,8 +6,9 @@ from books.serializers import BookSerializer
 from borrowings.models import Borrowing
 
 
-class BorrowingSerializer(serializers.ModelSerializer):
-    book = BookSerializer(read_only=True)
+class BorrowingListSerializer(serializers.ModelSerializer):
+    book = serializers.StringRelatedField()
+    user = serializers.StringRelatedField()
     class Meta:
         model = Borrowing
         fields = [
@@ -19,6 +20,12 @@ class BorrowingSerializer(serializers.ModelSerializer):
             "user"
 
         ]
+        read_only_fields = fields
+
+
+
+class BorrowingDetailSerializer(BorrowingListSerializer):
+    book = BookSerializer(read_only=True)
 
 
 class BorrowingCreateSerializer(serializers.ModelSerializer):
