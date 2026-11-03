@@ -1,11 +1,12 @@
+from datetime import timedelta
 from decimal import Decimal
-
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
-
 from books.models import Book
+from borrowings.models import Borrowing
 
 BOOKS_URL = "/api/books/"
 
@@ -71,6 +72,7 @@ class AuthenticatedBookApiTests(TestCase):
             email="user@test.com", password="pass12345"
         )
         self.client.force_authenticate(self.user)
+        self.book = make_book()
 
     def test_create_forbidden_for_non_staff(self):
         payload = {
@@ -88,6 +90,18 @@ class AuthenticatedBookApiTests(TestCase):
         response = self.client.delete(detail_url(book.id))
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_borrower_email_hidden_for_regular_user(self):
+        other_user = get_user_model().objects.create_user(
+            email="other@test.com", password="pass12345"
+        )
+        Borrowing.objects.create(
+            user=other_user,
+            book=self.book,
+            expected_return_date=timezone.localdate() + timedelta(days=5),
+        )
+        response = self.client.get(detail_url(self.book.id))
+        self.assertIsNone(response.data["borrowings"][0]["borrowed_by"])
+
 
 class AdminBookApiTests(TestCase):
     def setUp(self):
@@ -96,6 +110,7 @@ class AdminBookApiTests(TestCase):
             email="admin@test.com", password="pass12345", is_staff=True
         )
         self.client.force_authenticate(self.admin)
+        self.book = make_book()
 
     def test_create_book(self):
         payload = {
@@ -121,14 +136,26 @@ class AdminBookApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_update_book(self):
-        book = make_book()
-        response = self.client.patch(detail_url(book.id), {"inventory": 10})
+        response = self.client.patch(detail_url(self.book.id), {"inventory": 10})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        book.refresh_from_db()
-        self.assertEqual(book.inventory, 10)
+        self.book.refresh_from_db()
+        self.assertEqual(self.book.inventory, 10)
 
     def test_delete_book(self):
-        book = make_book()
-        response = self.client.delete(detail_url(book.id))
+        response = self.client.delete(detail_url(self.book.id))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(Book.objects.filter(id=book.id).exists())
+        self.assertFalse(Book.objects.filter(id=self.book.id).exists())
+
+    def test_borrower_email_visible_for_admin(self):
+        reader = get_user_model().objects.create_user(
+            email="reader@test.com", password="pass12345"
+        )
+        Borrowing.objects.create(
+            user=reader,
+            book=self.book,
+            expected_return_date=timezone.localdate() + timedelta(days=5),
+        )
+        response = self.client.get(detail_url(self.book.id))
+        self.assertEqual(
+            response.data["borrowings"][0]["borrowed_by"], "reader@test.com"
+        )

@@ -67,13 +67,12 @@ class BookDetailSerializer(serializers.ModelSerializer):
 
     def get_borrowings(self, obj):
         request = self.context.get("request")
-        show_user_status = bool(request and request.user.is_authenticated)
+        is_admin = bool(request and request.user.is_staff)
         return [
             {
                 "id": borrowing.id,
                 "borrowed_by": borrowing.user.get_full_name() or
-                borrowing.user.email
-                if show_user_status else None,
+                borrowing.user.email if is_admin else None,
                 "borrow_date": borrowing.borrow_date,
                 "expected_return_date": borrowing.expected_return_date,
                 "actual_return_date": borrowing.actual_return_date,

@@ -1,5 +1,5 @@
 from django.db import models
-from library_service import settings
+from django.conf import settings
 
 
 class Borrowing(models.Model):
